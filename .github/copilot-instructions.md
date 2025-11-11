@@ -19,8 +19,6 @@ Integrated business management platform with multiple coordinated microservices 
 - **Communication**: REST APIs + Spring Cloud Gateway + Service Discovery (Eureka)
 - **Language**: English only (code, comments, commits)
 
----
-
 ## Core Principles
 
 ### 1. DDD (Domain-Driven Design)
@@ -64,8 +62,6 @@ public class Order {
 }
 ```
 
----
-
 ### 2. TDD (Test-Driven Development)
 **Process**: RED → GREEN → REFACTOR
 
@@ -86,8 +82,6 @@ void shouldCreateOrderWhenPartnerHasValidCredit() {
     verify(orderRepo).save(any(Order.class));
 }
 ```
-
----
 
 ### 3. SOLID Principles
 
@@ -129,8 +123,6 @@ public class OrderService {
 }
 ```
 
----
-
 ### 4. DRY (Don't Repeat Yourself)
 
 ```java
@@ -160,8 +152,6 @@ public abstract class BaseService<T, ID> {
 }
 ```
 
----
-
 ## Project Structure
 
 ```
@@ -185,8 +175,6 @@ webapp/
 │   │   ├── models/partner.model.ts
 │   │   └── components/partner-list.component.ts
 ```
-
----
 
 ## Code Quality Rules
 
@@ -243,8 +231,6 @@ export class PartnerListComponent {
 - Direct DOM manipulation ❌ Use Angular APIs
 - Hardcoded URLs ❌ Use environment files
 
----
-
 ## Quick Reference
 
 **Naming:**
@@ -271,8 +257,6 @@ fix(order): resolve duplicate order creation
 docs(readme): update setup instructions
 ```
 
----
-
 ## Anti-Patterns to Avoid
 
 ❌ Anemic domain models (entities without behavior)  
@@ -283,7 +267,5 @@ docs(readme): update setup instructions
 ❌ Deep nesting (> 3 levels)  
 ❌ Mixed languages (Spanish/English)  
 ❌ Ignoring errors silently  
-
----
 
 **Remember**: Write tests first, keep it simple, make it work, make it clean.
