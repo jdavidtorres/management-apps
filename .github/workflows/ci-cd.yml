@@ -24,7 +24,7 @@ env:
   JAVA_VERSION: '17'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  MAVEN_OPTS: -Xmx3072m
+  GRADLE_OPTS: -Xmx3072m
 
 jobs:
   build-and-test:
@@ -59,7 +59,11 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: wrapper
 
       - name: Configure Git
         run: |
@@ -69,45 +73,37 @@ jobs:
       - name: Determine version
         id: version
         run: |
+          VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
-            echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          else
-            VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            VERSION=$(echo $VERSION | sed 's/-SNAPSHOT//')
           fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Cache Maven packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Build with Maven
-        run: mvn clean install -B -V
+      - name: Build with Gradle
+        run: ./gradlew clean build
 
       - name: Run tests
-        run: mvn test -B
+        run: ./gradlew test
         env:
           SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@localhost:27017/?authSource=admin
 
       - name: Generate coverage report
-        run: mvn jacoco:report -B
+        run: ./gradlew jacocoTestReport
+        continue-on-error: true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./target/site/jacoco/jacoco.xml
+          files: ./**/build/reports/jacoco/test/jacocoTestReport.xml
           flags: unittests
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: maven-artifacts
+          name: gradle-artifacts
           path: |
-            **/target/*.jar
-            !**/target/*-tests.jar
+            **/build/libs/*.jar
+            !**/build/libs/*-plain.jar
           retention-days: 7
 
   security-analysis:
@@ -129,7 +125,9 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -137,7 +135,7 @@ jobs:
           languages: java
 
       - name: Build for analysis
-        run: mvn clean install -DskipTests -B
+        run: ./gradlew clean build -x test
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

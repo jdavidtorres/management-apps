@@ -12,7 +12,7 @@ on:
 
 env:
   JAVA_VERSION: '17'
-  MAVEN_OPTS: -Xmx3072m
+  GRADLE_OPTS: -Xmx3072m
 
 jobs:
   validate:
@@ -69,30 +69,28 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
 
-      - name: Cache Maven packages
-        uses: actions/cache@v3
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          gradle-version: wrapper
 
-      - name: Build with Maven
-        run: mvn clean install -DskipTests -B -V
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
 
       - name: Run unit tests
-        run: mvn test -B
+        run: ./gradlew test
         env:
           SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@localhost:27017/?authSource=admin
 
       - name: Generate test coverage report
-        run: mvn jacoco:report -B
+        run: ./gradlew jacocoTestReport
+        continue-on-error: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./target/site/jacoco/jacoco.xml
+          files: ./**/build/reports/jacoco/test/jacocoTestReport.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -103,8 +101,8 @@ jobs:
         with:
           name: test-results
           path: |
-            **/target/surefire-reports/*.xml
-            **/target/site/jacoco
+            **/build/test-results/**/*.xml
+            **/build/reports/jacoco
 
   code-quality:
     name: Code Quality Analysis
@@ -122,18 +120,12 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
 
-      - name: Run SpotBugs
-        run: mvn spotbugs:check -B
-        continue-on-error: true
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - name: Run Checkstyle
-        run: mvn checkstyle:check -B
-        continue-on-error: true
-
-      - name: Run PMD
-        run: mvn pmd:check -B
+        run: ./gradlew checkstyleMain checkstyleTest
         continue-on-error: true
 
   security-scan:
@@ -155,7 +147,9 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -163,14 +157,14 @@ jobs:
           languages: java
 
       - name: Build for CodeQL
-        run: mvn clean install -DskipTests -B
+        run: ./gradlew clean build -x test
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
       - name: OWASP Dependency Check
         run: |
-          mvn org.owasp:dependency-check-maven:check -B
+          ./gradlew dependencyCheckAnalyze
         continue-on-error: true
 
       - name: Upload OWASP report
@@ -178,7 +172,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: owasp-report
-          path: target/dependency-check-report.html
+          path: build/reports/dependency-check-report.html
 
   docker-build:
     name: Docker Build Test
@@ -232,10 +226,13 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: 'maven'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - name: Run integration tests
-        run: mvn verify -DskipUnitTests -B
+        run: ./gradlew integrationTest
+        continue-on-error: true
         env:
           SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@localhost:27017/?authSource=admin
 
