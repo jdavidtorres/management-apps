@@ -1,0 +1,239 @@
+version: '3.8'
+
+services:
+  # MongoDB Databases
+  mongodb:
+    image: mongo:7.0
+    container_name: management-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - management-network
+
+  # Service Registry
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - management-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Configuration Server
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      - eureka-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # CRM Service
+  crm-service:
+    build:
+      context: ./crm-service
+      dockerfile: Dockerfile
+    container_name: crm-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/crm_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # POS Service
+  pos-service:
+    build:
+      context: ./pos-service
+      dockerfile: Dockerfile
+    container_name: pos-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/pos_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Timesheet Service
+  timesheet-service:
+    build:
+      context: ./timesheet-service
+      dockerfile: Dockerfile
+    container_name: timesheet-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/timesheet_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Project Management Service
+  project-management-service:
+    build:
+      context: ./project-management-service
+      dockerfile: Dockerfile
+    container_name: project-management-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/project_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Subscriptions Service
+  subscriptions-service:
+    build:
+      context: ./subscriptions-service
+      dockerfile: Dockerfile
+    container_name: subscriptions-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/subscriptions_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Sales Service
+  sales-service:
+    build:
+      context: ./sales-service
+      dockerfile: Dockerfile
+    container_name: sales-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/sales_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Employees Service
+  employees-service:
+    build:
+      context: ./employees-service
+      dockerfile: Dockerfile
+    container_name: employees-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/employees_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Helpdesk Service
+  helpdesk-service:
+    build:
+      context: ./helpdesk-service
+      dockerfile: Dockerfile
+    container_name: helpdesk-service
+    ports:
+      - "8088:8088"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/helpdesk_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Planning Service
+  planning-service:
+    build:
+      context: ./planning-service
+      dockerfile: Dockerfile
+    container_name: planning-service
+    ports:
+      - "8089:8089"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/planning_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+  # Inventory Service
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8090:8090"
+    depends_on:
+      - eureka-server
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/inventory_db?authSource=admin
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    networks:
+      - management-network
+
+networks:
+  management-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
