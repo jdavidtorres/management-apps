@@ -27,6 +27,7 @@ subprojects {
         springCloudVersion = '2023.0.0'
         lombokVersion = '1.18.30'
         testcontainersVersion = '1.19.3'
+        springdocVersion = '2.3.0'
     }
     
     dependencies {
