@@ -1,0 +1,8 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/crm_test_db
+
+logging:
+  level:
+    com.management.crm: DEBUG
